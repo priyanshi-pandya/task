@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../../screens/authentication/login.dart';
 import '../../screens/authentication/signup.dart';
+import '../../screens/dashboard/ViewAvailable.dart';
 import '../../screens/dashboard/dashboard.dart';
-
 
 class AppRoute {
   static Route? generateRoute(RouteSettings settings) {
@@ -18,7 +18,13 @@ class AppRoute {
           builder: (context) => SignUpScreen(),
         );
       case '/DashboardScreen':
-        return MaterialPageRoute(builder: (context) => DashboardScreen(),);
+        return MaterialPageRoute(
+          builder: (context) => const DashboardScreen(),
+        );
+      case '/ViewAvailable':
+        return MaterialPageRoute(
+          builder: (context) => const ViewAvailable(),
+        );
     }
   }
 }
