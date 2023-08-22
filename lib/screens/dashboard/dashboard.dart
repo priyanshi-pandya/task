@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:task/widgets/rounded_button.dart';
 
 import '../../app/constants/color.dart';
-import 'ViewAvailable.dart';
+import 'view_available.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -70,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: "View - Required",
                 onTap: () => Navigator.pushNamed(
                   context,
-                  '/ViewAvailable',
+                  '/ViewRequired',
                 ),
               ),
               const SizedBox(
@@ -80,17 +80,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 title: "My - Available",
                 onTap: () => Navigator.pushNamed(
                   context,
-                  '/ViewAvailable',
+                  '/MyAvailable',
                 ),
               ),
               const SizedBox(
                 height: 20,
               ),
               RoundedButton(
-                title: "My - Available",
+                title: "My - Required",
                 onTap: () => Navigator.pushNamed(
                   context,
-                  '/ViewAvailable',
+                  '/MyAvailable',
                 ),
               ),
               const SizedBox(

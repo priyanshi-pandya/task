@@ -1,9 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:task/screens/dashboard/view_required.dart';
 
 import '../../screens/authentication/login.dart';
 import '../../screens/authentication/signup.dart';
-import '../../screens/dashboard/ViewAvailable.dart';
+import '../../screens/dashboard/my_available.dart';
+import '../../screens/dashboard/view_available.dart';
 import '../../screens/dashboard/dashboard.dart';
 
 class AppRoute {
@@ -24,6 +26,14 @@ class AppRoute {
       case '/ViewAvailable':
         return MaterialPageRoute(
           builder: (context) => const ViewAvailable(),
+        );
+      case '/ViewRequired':
+        return MaterialPageRoute(
+          builder: (context) => const ViewRequired(),
+        );
+      case '/MyAvailable':
+        return MaterialPageRoute(
+          builder: (context) => const MyAvailable(),
         );
     }
   }

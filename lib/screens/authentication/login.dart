@@ -29,6 +29,7 @@ class LoginScreen extends StatelessWidget {
                   children: [
                     TextFormField(
                       controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
                         hintText: "Email",
                         filled: true,
@@ -60,7 +61,9 @@ class LoginScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              SizedBox(height: 320,),
+              SizedBox(
+                height: 320,
+              ),
               Column(
                 children: [
                   RoundedButton(
