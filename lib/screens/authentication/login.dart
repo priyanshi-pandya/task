@@ -1,14 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:task/screens/dashboard/dashboard.dart';
 
 import '../../app/constants/color.dart';
 import '../../widgets/rounded_button.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   LoginScreen({super.key});
 
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  User? _user;
+  bool _loading = false;
   final emailController = TextEditingController();
+
   final pswdController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _getAuth();
+  }
+
+  Future<void> _getAuth() async {
+    setState(() {
+      _user = Supabase.instance.client.auth.currentUser;
+    });
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      setState(() {
+        _user = data.session?.user;
+      });
+    });
+    if (_user != null) {
+      Navigator.pushNamed(
+        context,
+        'DashboardScreen',
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,73 +52,97 @@ class LoginScreen extends StatelessWidget {
           backgroundColor: TColors.appbarColor),
       body: SafeArea(
           child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 100),
-          child: Column(
-            children: [
-              Form(
-                key: _formKey,
+        child: _loading
+            ? Center(child: CircularProgressIndicator())
+            : Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 100),
                 child: Column(
                   children: [
-                    TextFormField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: InputDecoration(
-                        hintText: "Email",
-                        filled: true,
-                        fillColor: TColors.textBackgroundColor,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                            decoration: InputDecoration(
+                              hintText: "Email",
+                              filled: true,
+                              fillColor: TColors.textBackgroundColor,
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide.none),
+                            ),
+                            validator: (value) =>
+                                value!.isEmpty ? "Please enter email" : null,
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          TextFormField(
+                            controller: pswdController,
+                            obscureText: true,
+                            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                            decoration: InputDecoration(
+                              hintText: "Password",
+                              filled: true,
+                              fillColor: TColors.textBackgroundColor,
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  borderSide: BorderSide.none),
+                            ),
+                            validator: (value) =>
+                                value!.isEmpty ? "Please enter password" : null,
+                          ),
+                        ],
                       ),
-                      validator: (value) =>
-                          value!.isEmpty ? "Please enter email" : null,
                     ),
                     const SizedBox(
-                      height: 20,
+                      height: 320,
                     ),
-                    TextFormField(
-                      controller: pswdController,
-                      obscureText: true,
-                      decoration: InputDecoration(
-                        hintText: "Password",
-                        filled: true,
-                        fillColor: TColors.textBackgroundColor,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none),
-                      ),
-                      validator: (value) =>
-                          value!.isEmpty ? "Please enter password" : null,
+                    Column(
+                      children: [
+                        RoundedButton(
+                          title: 'Sign In',
+                          onTap: () async {
+                            if (_formKey.currentState!.validate()) {
+                              try {
+                                await Supabase.instance.client.auth
+                                    .signInWithPassword(
+                                        email: emailController.text.toString(),
+                                        password:
+                                            pswdController.text.toString());
+                                setState(() {
+                                  _loading = false;
+                                });
+                                Navigator.pushNamed(
+                                    context, '/DashboardScreen');
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("Login Failed $e")));
+
+                                setState(() {
+                                  _loading = false;
+                                });
+                              }
+                            }
+                          },
+                        ),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        RoundedButton(
+                          title: 'Sign Up',
+                          onTap: () =>
+                              Navigator.pushNamed(context, '/SignUpScreen'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              SizedBox(
-                height: 320,
-              ),
-              Column(
-                children: [
-                  RoundedButton(
-                    title: 'Sign In',
-                    onTap: () {
-                      if (_formKey.currentState!.validate()) {
-                        Navigator.pushNamed(context, '/DashboardScreen');
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  RoundedButton(
-                    title: 'Sign Up',
-                    onTap: () => Navigator.pushNamed(context, '/SignUpScreen'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       )),
     );
   }

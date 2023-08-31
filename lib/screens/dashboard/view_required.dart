@@ -3,8 +3,17 @@ import 'package:flutter/material.dart';
 import '../../app/constants/color.dart';
 import '../../widgets/custom_cell.dart';
 
-class ViewRequired extends StatelessWidget {
-  const ViewRequired({super.key});
+class ViewRequired extends StatefulWidget {
+  ViewRequired({super.key});
+
+  @override
+  State<ViewRequired> createState() => _ViewRequiredState();
+}
+
+class _ViewRequiredState extends State<ViewRequired> {
+  bool sort = true;
+
+  var sortColumnIdx = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -18,132 +27,157 @@ class ViewRequired extends StatelessWidget {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.only(top: 10.0),
-          child: DataTable(
-            decoration: const BoxDecoration(color: Colors.white),
-            border: TableBorder.all(style: BorderStyle.none),
-            dividerThickness: 0,
-            columnSpacing: 8,
-            dataRowMinHeight: 38,
-            headingTextStyle: const TextStyle(color: Colors.white),
-            showBottomBorder: false,
-
-            columns: const [
-              DataColumn(
-                label: CustomCell(
-                  text: 'Carpet',
-                  color: TColors.buttonColor,
-                  pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            physics: const BouncingScrollPhysics(),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: DataTable(
+                sortAscending: sort,
+                sortColumnIndex: sortColumnIdx,
+                decoration: const BoxDecoration(color: Colors.white),
+                border: TableBorder.all(style: BorderStyle.none),
+                dividerThickness: 0,
+                columnSpacing: 8,
+                dataRowMinHeight: 38,
+                headingTextStyle: const TextStyle(color: Colors.white),
+                showBottomBorder: false,
+                columns: [
+                  DataColumn(
+                    label: const CustomCell(
+                      text: 'Carpet',
+                      color: TColors.buttonColor,
+                      pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                    ),
+                    onSort: (columnIndex, ascending) {
+                      sort = !sort;
+                      sortColumnIdx = columnIndex;
+                      setState(() {});
+                    },
+                  ),
+                  DataColumn(
+                    label: const CustomCell(
+                      text: 'Rate',
+                      color: TColors.buttonColor,
+                      pad: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                    ),
+                    onSort: (columnIndex, ascending) {
+                      setState(() {
+                        sort = !sort;
+                        sortColumnIdx = columnIndex;
+                      });
+                    },
+                  ),
+                  DataColumn(
+                    label: const CustomCell(
+                      text: 'Floor',
+                      color: TColors.buttonColor,
+                      pad: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    ),
+                    onSort: (columnIndex, ascending) {
+                      sort = !sort;
+                      sortColumnIdx = columnIndex;
+                      setState(() {});
+                    },
+                  ),
+                ],
+                rows: const [
+                  DataRow(cells: [
+                    DataCell(
+                      CustomCell(
+                        text: 'Carpet',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'CarpetRate',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'FloorLevel',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(
+                      CustomCell(
+                        text: 'Carpet',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'CarpetRate',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'FloorLevel',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(
+                      CustomCell(
+                        text: 'Carpet',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'CarpetRate',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'FloorLevel',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                  ]),
+                  DataRow(cells: [
+                    DataCell(
+                      CustomCell(
+                        text: 'Carpet',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'CarpetRate',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                      ),
+                    ),
+                    DataCell(
+                      CustomCell(
+                        text: 'FloorLevel',
+                        color: TColors.textBackgroundColor,
+                        pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+                      ),
+                    ),
+                  ]),
+                ],
               ),
-              DataColumn(
-                label: CustomCell(
-                  text: 'Rate',
-                  color: TColors.buttonColor,
-                  pad: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                ),
-              ),
-              DataColumn(
-                label: CustomCell(
-                  text: 'Floor',
-                  color: TColors.buttonColor,
-                  pad: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                ),
-              ),
-            ],
-            rows: const [
-              DataRow(cells: [
-                DataCell(
-                  CustomCell(
-                    text: 'Carpet',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'CarpetRate',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'FloorLevel',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-              ]),
-              DataRow(cells: [
-                DataCell(
-                  CustomCell(
-                    text: 'Carpet',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'CarpetRate',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'FloorLevel',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-              ]),
-              DataRow(cells: [
-                DataCell(
-                  CustomCell(
-                    text: 'Carpet',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'CarpetRate',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'FloorLevel',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-              ]),
-              DataRow(cells: [
-                DataCell(
-                  CustomCell(
-                    text: 'Carpet',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'CarpetRate',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  ),
-                ),
-                DataCell(
-                  CustomCell(
-                    text: 'FloorLevel',
-                    color: TColors.textBackgroundColor,
-                    pad: EdgeInsets.symmetric(horizontal: 25, vertical: 15),
-                  ),
-                ),
-              ]),
-            ],
+            ),
           ),
         ),
       ),

@@ -29,11 +29,11 @@ class AppRoute {
         );
       case '/ViewRequired':
         return MaterialPageRoute(
-          builder: (context) => const ViewRequired(),
+          builder: (context) => ViewRequired(),
         );
       case '/MyAvailable':
         return MaterialPageRoute(
-          builder: (context) => const MyAvailable(),
+          builder: (context) => MyAvailable(),
         );
     }
   }

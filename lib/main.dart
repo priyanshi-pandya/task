@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/constants/color.dart';
 import 'app/routes/app_routes.dart';
 
-void main() {
+
+void main() async{
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://hewgtujypofrcryzaiuu.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhld2d0dWp5cG9mcmNyeXphaXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTM0MTI1MDgsImV4cCI6MjAwODk4ODUwOH0.Zx29tQZovVgJR6vaa3rbau_nqHztZHHt2h0u1o3FgVc',
+  );
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(statusBarColor: TColors.buttonColor),
   );
