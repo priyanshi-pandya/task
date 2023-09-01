@@ -19,6 +19,8 @@ void main() async{
   runApp(const MyApp());
 }
 
+var supabase = Supabase.instance.client;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

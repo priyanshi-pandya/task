@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:task/main.dart';
 import 'package:task/screens/dashboard/dashboard.dart';
+import 'package:task/store/supabase_service.dart';
 
 import '../../app/constants/color.dart';
 import '../../widgets/rounded_button.dart';
@@ -15,9 +18,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   User? _user;
-  bool _loading = false;
+  final supabaseService = SupabaseService();
   final emailController = TextEditingController();
-
   final pswdController = TextEditingController();
 
   @override
@@ -52,7 +54,7 @@ class _LoginScreenState extends State<LoginScreen> {
           backgroundColor: TColors.appbarColor),
       body: SafeArea(
           child: SingleChildScrollView(
-        child: _loading
+        child: supabaseService.isLoading
             ? Center(child: CircularProgressIndicator())
             : Padding(
                 padding:
@@ -66,7 +68,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: emailController,
                             keyboardType: TextInputType.emailAddress,
-                            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                            onTapOutside: (event) =>
+                                FocusScope.of(context).unfocus(),
                             decoration: InputDecoration(
                               hintText: "Email",
                               filled: true,
@@ -84,7 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: pswdController,
                             obscureText: true,
-                            onTapOutside: (event) => FocusScope.of(context).unfocus(),
+                            onTapOutside: (event) =>
+                                FocusScope.of(context).unfocus(),
                             decoration: InputDecoration(
                               hintText: "Password",
                               filled: true,
@@ -107,25 +111,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         RoundedButton(
                           title: 'Sign In',
                           onTap: () async {
+                            supabaseService.setLoading(true);
                             if (_formKey.currentState!.validate()) {
                               try {
-                                await Supabase.instance.client.auth
-                                    .signInWithPassword(
-                                        email: emailController.text.toString(),
-                                        password:
-                                            pswdController.text.toString());
-                                setState(() {
-                                  _loading = false;
-                                });
+                                await supabase.auth.signInWithPassword(
+                                    email: emailController.text.toString(),
+                                    password: pswdController.text.toString());
+
+                                supabaseService.setLoading(false);
                                 Navigator.pushNamed(
                                     context, '/DashboardScreen');
                               } catch (e) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text("Login Failed $e")));
-
-                                setState(() {
-                                  _loading = false;
-                                });
+                                supabaseService.setLoading(false);
                               }
                             }
                           },

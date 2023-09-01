@@ -35,6 +35,10 @@ class AppRoute {
         return MaterialPageRoute(
           builder: (context) => MyAvailable(),
         );
+      default:
+        return MaterialPageRoute(
+          builder: (context) => const DashboardScreen(),
+        );
     }
   }
 }
