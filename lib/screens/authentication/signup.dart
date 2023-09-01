@@ -1,16 +1,20 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_mobx/flutter_mobx.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:task/main.dart';
+
 import '../../app/constants/color.dart';
 import '../../store/supabase_service.dart';
 import '../../widgets/rounded_button.dart';
 
-class SignUpScreen extends StatelessWidget {
-  SignUpScreen({super.key});
+class SignUpScreen extends StatefulWidget {
+  const SignUpScreen({super.key});
 
+  @override
+  State<SignUpScreen> createState() => _SignUpScreenState();
+}
+
+class _SignUpScreenState extends State<SignUpScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   final emailController = TextEditingController();
@@ -49,12 +53,10 @@ class SignUpScreen extends StatelessWidget {
         .insert([userData])
         .execute()
         .then(
-          (value) => debugPrint(
-              "********************Data inserted successfully********************"),
+          (value) => debugPrint("Data inserted successfully"),
         )
         .catchError(
-          (error) => debugPrint(
-              "**************************Error while inserting data $error******************"),
+          (error) => debugPrint("Error while inserting data : $error"),
         );
   }
 
@@ -222,39 +224,43 @@ class SignUpScreen extends StatelessWidget {
               const SizedBox(
                 height: 70,
               ),
-                RoundedButton(
-                  title: 'Sign Up',
-                  onTap: () async {
-                    supabaseService.setLoading(true);
-                    log(_formKey.currentState!.validate().toString(),
-                        name: "validateeee");
-                    if (_formKey.currentState!.validate()) {
-                      try {
-                        await supabase.auth.signUp(
-                          password: pswdController.text,
-                          email: emailController.text,
-                        );
-                        insertUserData(
-                          email: emailController.text,
-                          name: nameController.text,
-                          no: noController.text,
-                          pswd: pswdController.text,
-                          city: cityController.text,
-                          offno: ofNoController.text,
-                        );
+              RoundedButton(
+                title: 'Sign Up',
+                onTap: () async {
+                  supabaseService.setLoading(true);
+                  log(_formKey.currentState!.validate().toString(),
+                      name: "validateeee");
+                  if (_formKey.currentState!.validate()) {
+                    try {
+                      await supabase.auth.signUp(
+                        password: pswdController.text,
+                        email: emailController.text,
+                      );
+                      insertUserData(
+                        email: emailController.text,
+                        name: nameController.text,
+                        no: noController.text,
+                        pswd: pswdController.text,
+                        city: cityController.text,
+                        offno: ofNoController.text,
+                      );
+                      if (mounted) {
                         Navigator.pushNamed(context, '/DashboardScreen');
-                        supabaseService.setLoading(false);
-                      } catch (e) {
+                      }
+                      supabaseService.setLoading(false);
+                    } catch (e) {
+                      if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text("Sign up Failed $e"),
                           ),
                         );
-                        supabaseService.setLoading(false);
                       }
+                      supabaseService.setLoading(false);
                     }
-                  },
-                ),
+                  }
+                },
+              ),
             ],
           ),
         ),
