@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
       });
     });
     if (_user != null) {
-      Navigator.pushNamed(
+      Navigator.pushReplacementNamed(
         context,
         'DashboardScreen',
       );

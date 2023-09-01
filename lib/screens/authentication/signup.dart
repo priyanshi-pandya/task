@@ -245,7 +245,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         offno: ofNoController.text,
                       );
                       if (mounted) {
-                        Navigator.pushNamed(context, '/DashboardScreen');
+                        Navigator.pushReplacementNamed(context, '/DashboardScreen');
                       }
                       supabaseService.setLoading(false);
                     } catch (e) {
