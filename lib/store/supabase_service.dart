@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:mobx/mobx.dart';
 
 part 'supabase_service.g.dart';

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart' as provider;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:task/main.dart';
-import 'package:task/store/supabase_service.dart';
-
 import '../../app/constants/color.dart';
 import '../../widgets/rounded_button.dart';
 
@@ -16,7 +15,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   User? _user;
-  final supabaseService = SupabaseService();
+
+  // final supabaseService = SupabaseService();
   final emailController = TextEditingController();
   final pswdController = TextEditingController();
 
@@ -50,94 +50,106 @@ class _LoginScreenState extends State<LoginScreen> {
           title: const Text("Sign In"),
           centerTitle: true,
           backgroundColor: TColors.appbarColor),
-      body: SafeArea(
-          child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 100),
-          child: Column(
-            children: [
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      onTapOutside: (event) => FocusScope.of(context).unfocus(),
-                      decoration: InputDecoration(
-                        hintText: "Email",
-                        filled: true,
-                        fillColor: TColors.textBackgroundColor,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none),
+      body: supabaseService.isLoading
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : SafeArea(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10.0, vertical: 100),
+                  child: Column(
+                    children: [
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              controller: emailController,
+                              keyboardType: TextInputType.emailAddress,
+                              onTapOutside: (event) =>
+                                  FocusScope.of(context).unfocus(),
+                              decoration: InputDecoration(
+                                hintText: "Email",
+                                filled: true,
+                                fillColor: TColors.textBackgroundColor,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none),
+                              ),
+                              validator: (value) =>
+                                  value!.isEmpty ? "Please enter email" : null,
+                            ),
+                            const SizedBox(
+                              height: 20,
+                            ),
+                            TextFormField(
+                              controller: pswdController,
+                              obscureText: true,
+                              onTapOutside: (event) =>
+                                  FocusScope.of(context).unfocus(),
+                              decoration: InputDecoration(
+                                hintText: "Password",
+                                filled: true,
+                                fillColor: TColors.textBackgroundColor,
+                                border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    borderSide: BorderSide.none),
+                              ),
+                              validator: (value) => value!.isEmpty
+                                  ? "Please enter password"
+                                  : null,
+                            ),
+                          ],
+                        ),
                       ),
-                      validator: (value) =>
-                          value!.isEmpty ? "Please enter email" : null,
-                    ),
-                    const SizedBox(
-                      height: 20,
-                    ),
-                    TextFormField(
-                      controller: pswdController,
-                      obscureText: true,
-                      onTapOutside: (event) => FocusScope.of(context).unfocus(),
-                      decoration: InputDecoration(
-                        hintText: "Password",
-                        filled: true,
-                        fillColor: TColors.textBackgroundColor,
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide.none),
+                      const SizedBox(
+                        height: 320,
                       ),
-                      validator: (value) =>
-                          value!.isEmpty ? "Please enter password" : null,
-                    ),
-                  ],
+                      Column(
+                        children: [
+                          RoundedButton(
+                            title: 'Sign In',
+                            onTap: () async {
+                              supabaseService.setLoading(true);
+                              if (_formKey.currentState!.validate()) {
+                                try {
+                                  await supabase.auth.signInWithPassword(
+                                      email: emailController.text.toString(),
+                                      password: pswdController.text.toString());
+
+                                  supabaseService.setLoading(false);
+                                  if (mounted) {
+                                    Navigator.pushNamed(
+                                        context, '/DashboardScreen');
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                            content: Text("Login Failed $e")));
+                                  }
+                                  supabaseService.setLoading(false);
+                                }
+                              }
+                            },
+                          ),
+                          const SizedBox(
+                            height: 20,
+                          ),
+                          RoundedButton(
+                            title: 'Sign Up',
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/SignUpScreen'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(
-                height: 320,
-              ),
-              Column(
-                children: [
-                  RoundedButton(
-                    title: 'Sign In',
-                    onTap: () async {
-                      supabaseService.setLoading(true);
-                      if (_formKey.currentState!.validate()) {
-                        try {
-                          await supabase.auth.signInWithPassword(
-                              email: emailController.text.toString(),
-                              password: pswdController.text.toString());
-
-                          supabaseService.setLoading(false);
-                          if (mounted) {
-                            Navigator.pushNamed(context, '/DashboardScreen');
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Login Failed $e")));
-                          }
-                          supabaseService.setLoading(false);
-                        }
-                      }
-                    },
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  RoundedButton(
-                    title: 'Sign Up',
-                    onTap: () => Navigator.pushNamed(context, '/SignUpScreen'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      )),
+            ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:task/store/supabase_service.dart';
 import 'app/constants/color.dart';
 import 'app/routes/app_routes.dart';
 
@@ -20,6 +21,8 @@ void main() async{
 }
 
 var supabase = Supabase.instance.client;
+
+final supabaseService = SupabaseService();
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
