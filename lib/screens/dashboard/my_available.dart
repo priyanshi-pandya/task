@@ -19,17 +19,38 @@ class MyAvailable extends StatefulWidget {
 
 class _MyAvailableState extends State<MyAvailable> {
   PostgrestResponse? result;
-  List<dynamic>? data;
+  List<dynamic>? datalist;
 
   Future<List> _getAllData() async {
     result = await supabase.from('available_office').select().execute();
-    return data = result?.data as List;
+    datalist = result?.data as List;
+    print(datalist?.length);
+    return datalist!;
   }
 
   bool sort = true;
 
   int sortColumnIdx = 0;
   late Future getAllData;
+
+  void _sort(int columnIndex, bool ascending) {
+    if (columnIndex == 0) {
+      if (ascending) {
+        datalist?.sort((a, b) => a['officeno'].compareTo(b['officeno']));
+      } else {
+        datalist?.sort((a, b) => b['officeno'].compareTo(a['officeno']));
+      }
+    }
+    if (columnIndex == 1) {
+      if (ascending) {
+        datalist?.sort((a, b) =>
+            a['sqftexact'].toString().compareTo(b['sqftexact'].toString()));
+      } else {
+        datalist?.sort((a, b) =>
+            b['sqftexact'].toString().compareTo(a['sqftexact'].toString()));
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -60,7 +81,7 @@ class _MyAvailableState extends State<MyAvailable> {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return SizedBox(
-                          height: MediaQuery.sizeOf(context).height * 0.8,
+                            height: MediaQuery.sizeOf(context).height * 0.8,
                             width: MediaQuery.sizeOf(context).width,
                             child: const Center(
                               child: CircularProgressIndicator(),
@@ -84,9 +105,11 @@ class _MyAvailableState extends State<MyAvailable> {
                                 color: TColors.buttonColor,
                               ),
                               onSort: (columnIndex, ascending) {
-                                sort = !sort;
-                                sortColumnIdx = columnIndex;
-                                setState(() {});
+                                setState(() {
+                                  sort = !sort;
+                                  sortColumnIdx = columnIndex;
+                                });
+                                _sort(columnIndex, sort);
                               },
                             ),
                             DataColumn(
@@ -95,9 +118,11 @@ class _MyAvailableState extends State<MyAvailable> {
                                 color: TColors.buttonColor,
                               ),
                               onSort: (columnIndex, ascending) {
-                                sort = !sort;
-                                sortColumnIdx = columnIndex;
-                                setState(() {});
+                                setState(() {
+                                  sort = !sort;
+                                  sortColumnIdx = columnIndex;
+                                });
+                                _sort(columnIndex, sort);
                               },
                             ),
                             const DataColumn(
@@ -108,8 +133,8 @@ class _MyAvailableState extends State<MyAvailable> {
                             ),
                           ],
                           rows: [
-                            if (data != null && data!.isNotEmpty)
-                              ...data!.map((rowData) {
+                            if (datalist != null && datalist!.isNotEmpty)
+                              ...datalist!.map((rowData) {
                                 int availableSerial =
                                     rowData['availableserial'];
 
@@ -170,7 +195,7 @@ class _MyAvailableState extends State<MyAvailable> {
   }
 
   _showAlertDialog(BuildContext context, String text, String btn1, String btn2,
-      [int? availableSerial]) async{
+      [int? availableSerial]) async {
     final addForm = GlobalKey<FormState>();
     final TextEditingController officeNoController = TextEditingController();
     final TextEditingController floorController = TextEditingController();
@@ -200,13 +225,13 @@ class _MyAvailableState extends State<MyAvailable> {
 
     var selectedItem = "item1";
     String? sellingType;
-    if(availableSerial != null){
+    if (availableSerial != null) {
       PostgrestResponse editResult = await supabase
           .from('available_office')
           .select()
           .eq('availableserial', availableSerial)
           .execute();
-      final  editRes = editResult.data[0];
+      final editRes = editResult.data[0];
       officeNoController.text = editRes['officeno'].toString();
       floorController.text = editRes['floor'].toString();
       sqftRateController.text = editRes['sqftrate'].toString();
@@ -214,7 +239,6 @@ class _MyAvailableState extends State<MyAvailable> {
       fromDateController.text = editRes['fromdate'].toString();
       rentMonthsFromController.text = editRes['onrentmonthsfrom'].toString();
       rentMonthUptoController.text = editRes['onrentmonthupto'].toString();
-
     }
     void changeRadio(value) {
       setState(() {
@@ -239,7 +263,7 @@ class _MyAvailableState extends State<MyAvailable> {
       fromDateController.text = DateFormat('yyyy-MM-dd').format(selectedDate);
     }
 
-    if(mounted){
+    if (mounted) {
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -271,15 +295,15 @@ class _MyAvailableState extends State<MyAvailable> {
                         .execute();
                     log(response.status.toString(), name: "EDIT STATUS");
                     if (response.status == 204) {
-                        await _getAllData();
-                        setState(() {});
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Data Updated Successfully'),
-                          ),
-                        );
-                        Navigator.pop(context);
-                      }
+                      await _getAllData();
+                      setState(() {});
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Data Updated Successfully'),
+                        ),
+                      );
+                      Navigator.pop(context);
+                    }
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -311,61 +335,77 @@ class _MyAvailableState extends State<MyAvailable> {
                 };
 
                 if (btn2 == "Add") {
-                  try {
-                    final response = await supabase
-                        .from('available_office')
-                        .insert(data)
-                        .execute();
-                    log(response.status.toString(), name: "STATUS");
-                    if (response.status == 201) {
+                  if (addForm.currentState!.validate() == true) {
+                    try {
+                      final response = await supabase
+                          .from('available_office')
+                          .insert(data)
+                          .execute();
+                      log(response.status.toString(), name: "STATUS");
+                      if (response.status == 201) {
+                        if (mounted) {
+                          await _getAllData();
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Data inserted Successfully'),
+                            ),
+                          );
+                          Navigator.pop(context);
+                        }
+                      }
+                    } catch (e) {
                       if (mounted) {
-                        await _getAllData();
-                        setState(() {});
+                        log(e.toString(), name: "ADD DATA ERROR");
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Data inserted Successfully'),
+                          SnackBar(
+                            content: Text('Error Inserting Data $e'),
                           ),
                         );
-                        Navigator.pop(context);
                       }
                     }
-                  } catch (e) {
-                    if (mounted) {
-                      log(e.toString(), name: "ADD DATA ERROR");
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Error Inserting Data $e'),
-                        ),
-                      );
-                    }
                   }
-                }
-                else{
-                  showDialog(context: context, builder: (context) => AlertDialog(
-                    title: Text("Are You Sure?"),
-                    actions: [
-                      ElevatedButton(onPressed: () async{
-                        try{
-                          PostgrestResponse res = await supabase.from('available_office').delete().eq('availableserial', availableSerial).execute();
-                          if(res.status == 204) {
-                            await _getAllData();
-                            setState(() {});
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text("Data Deleted successfully")));
+                } else {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text("Are You Sure?"),
+                      actions: [
+                        ElevatedButton(
+                          onPressed: () async {
+                            try {
+                              PostgrestResponse res = await supabase
+                                  .from('available_office')
+                                  .delete()
+                                  .eq('availableserial', availableSerial)
+                                  .execute();
+                              if (res.status == 204) {
+                                await _getAllData();
+                                setState(() {});
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content:
+                                            Text("Data Deleted successfully")));
+                                Navigator.pop(context);
+                                Navigator.pop(context);
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content: Text("Error in deleting data")));
+                            }
+                          },
+                          child: const Text("Yes"),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
                             Navigator.pop(context);
-                            Navigator.pop(context);
-                          }
-                        }catch(e){
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text("Error in deleting data")));
-                        }
-                      }, child: const Text("Yes"),),
-                      ElevatedButton(onPressed: () {
-                        Navigator.pop(context);
-                      }, child: Text("Cancel"),),
-                    ],
-                  ),);
-
+                          },
+                          child: Text("Cancel"),
+                        ),
+                      ],
+                    ),
+                  );
                 }
               },
               child: Text(btn2),
@@ -438,6 +478,8 @@ class _MyAvailableState extends State<MyAvailable> {
                     controller: fromDateController,
                     onTap: () => _selectDate(context),
                     readOnly: true,
+                    validator: (value) =>
+                        value!.isEmpty ? "PLease select date" : null,
                     decoration: const InputDecoration(
                       hintText: 'Select Date',
                       suffixIcon: Icon(Icons.calendar_today),
@@ -455,7 +497,7 @@ class _MyAvailableState extends State<MyAvailable> {
                             validationText: "Please enter carpet rate",
                             keyboardType: TextInputType.number,
                             textFormatter:
-                            FilteringTextInputFormatter.digitsOnly),
+                                FilteringTextInputFormatter.digitsOnly),
                       ),
                       const SizedBox(
                         width: 10,
