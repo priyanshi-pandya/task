@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:task/main.dart';
 import '../../app/constants/color.dart';
@@ -16,30 +17,22 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   User? _user;
 
-  // final supabaseService = SupabaseService();
-  final emailController = TextEditingController();
-  final pswdController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController pswdController = TextEditingController();
+
+  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   @override
   void initState() {
     super.initState();
-    _getAuth();
+    _getPrefsData();
   }
 
-  Future<void> _getAuth() async {
-    setState(() {
-      _user = Supabase.instance.client.auth.currentUser;
-    });
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      setState(() {
-        _user = data.session?.user;
-      });
-    });
-    if (_user != null) {
-      Navigator.pushReplacementNamed(
-        context,
-        'DashboardScreen',
-      );
+  Future<void> _getPrefsData() async {
+    var prefs = await _prefs;
+    if (prefs.getString('email') != null) {
+      emailController.text = prefs.getString('email').toString();
+      pswdController.text = prefs.getString('pswd').toString();
     }
   }
 
@@ -101,6 +94,25 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ? "Please enter password"
                                   : null,
                             ),
+                            const SizedBox(
+                              height: 10,
+                            ),
+                            Row(
+                              children: [
+                                const Spacer(),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pushNamed(
+                                        context, '/ForgotPasswordScreen');
+                                  },
+                                  style: ButtonStyle(
+                                    padding: MaterialStateProperty.all(
+                                        EdgeInsets.zero),
+                                  ),
+                                  child: const Text("Forgot Password?"),
+                                ),
+                              ],
+                            )
                           ],
                         ),
                       ),
@@ -119,16 +131,43 @@ class _LoginScreenState extends State<LoginScreen> {
                                       email: emailController.text.toString(),
                                       password: pswdController.text.toString());
 
+                                  SharedPreferences prefs = await _prefs;
+                                  prefs.setString(
+                                      'email', emailController.text);
+                                  prefs.setString('pswd', pswdController.text);
                                   supabaseService.setLoading(false);
                                   if (mounted) {
                                     Navigator.pushNamed(
                                         context, '/DashboardScreen');
                                   }
                                 } catch (e) {
-                                  if (mounted) {
+                                  if (e is AuthException &&
+                                      e.message == "Email not confirmed" &&
+                                      mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                            content: Text("Login Failed $e")));
+                                      const SnackBar(
+                                        content: Text(
+                                            "Please confirm the link in your mail box"),
+                                      ),
+                                    );
+                                  } else if (e is AuthException && e.message == "Invalid user credential" && mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.message),
+                                      ),
+                                    );
+                                  }else if(e is AuthException && mounted){
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.message),
+                                      ),
+                                    );
+                                  }else{
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(e.toString()),
+                                      ),
+                                    );
                                   }
                                   supabaseService.setLoading(false);
                                 }

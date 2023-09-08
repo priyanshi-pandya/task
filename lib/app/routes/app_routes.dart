@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:task/screens/authentication/forgot_password.dart';
 import 'package:task/screens/dashboard/view_required.dart';
 
 import '../../screens/authentication/login.dart';
@@ -13,11 +14,15 @@ class AppRoute {
     switch (settings.name) {
       case '/':
         return MaterialPageRoute(
-          builder: (context) => LoginScreen(),
+          builder: (context) => const LoginScreen(),
+        );
+      case '/LoginScreen':
+        return MaterialPageRoute(
+          builder: (context) => const LoginScreen(),
         );
       case '/SignUpScreen':
         return MaterialPageRoute(
-          builder: (context) => SignUpScreen(),
+          builder: (context) => const SignUpScreen(),
         );
       case '/DashboardScreen':
         return MaterialPageRoute(
@@ -34,6 +39,10 @@ class AppRoute {
       case '/MyAvailable':
         return MaterialPageRoute(
           builder: (context) => MyAvailable(),
+        );
+      case '/ForgotPasswordScreen':
+        return MaterialPageRoute(
+          builder: (context) => const ForgotPasswordScreen(),
         );
       default:
         return MaterialPageRoute(

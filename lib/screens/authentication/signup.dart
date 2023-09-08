@@ -237,21 +237,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     supabaseService.setLoading(true);
                     if (_formKey.currentState!.validate()) {
                       try {
-                        await supabase.auth.signUp(
-                          password: pswdController.text,
-                          email: emailController.text,
-                        );
-                        insertUserData(
-                          email: emailController.text,
-                          name: nameController.text,
-                          no: noController.text,
-                          pswd: pswdController.text,
-                          city: cityController.text,
-                          offno: ofNoController.text,
-                        );
-                        if (mounted) {
-                          Navigator.pushReplacementNamed(
-                              context, '/DashboardScreen');
+                        var res = await supabase.from('user_mas').select().eq('useremail', emailController.text).execute();
+                        if(res.count == 0){
+                          await supabase.auth.signUp(
+                            password: pswdController.text,
+                            email: emailController.text,
+                          );
+                          insertUserData(
+                            email: emailController.text,
+                            name: nameController.text,
+                            no: noController.text,
+                            pswd: pswdController.text,
+                            city: cityController.text,
+                            offno: ofNoController.text,
+                          );
+                          if (mounted) {
+                            Navigator.pushReplacementNamed(
+                                context, '/DashboardScreen');
+                          }
+                        }else{
+                          if(mounted){
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("User already exists"),),);
+                            Navigator.pushReplacementNamed(
+                                context, '/SignUpScreen');
+                          }
+
                         }
                         supabaseService.setLoading(false);
                       } catch (e) {
