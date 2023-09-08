@@ -442,34 +442,72 @@ class _MyAvailableState extends State<MyAvailable> {
                   const SizedBox(
                     height: 10,
                   ),
-                  Column(
-                    children: [
-                      RadioListTile(
-                        dense: true,
-                        autofocus: true,
-                        value: "OnOutRight",
-                        onChanged: (value) {
-                          setState(() {
-                            sellingType = value;
-                            debugPrint(sellingType);
-                          });
-                        },
-                        groupValue: sellingType,
-                        title: const Text("On Out Right"),
-                      ),
-                      RadioListTile(
-                        dense: true,
-                        value: "OnSale",
-                        onChanged: (value) {
-                          setState(() {
-                            sellingType = value;
-                            debugPrint(sellingType);
-                          });
-                        },
-                        groupValue: sellingType,
-                        title: const Text("On Sale"),
-                      ),
-                    ],
+                  Container(
+                    height: 100,
+                    decoration:
+                        BoxDecoration(border: Border.all(color: Colors.black)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(
+                          width: 5,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.only(top: 15.0),
+                          child: Text("Radio:"),
+                        ),
+                        const SizedBox(
+                          width: 50,
+                        ),
+                        StatefulBuilder(
+                          builder: (context, setState) => Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Radio(
+                                    value: "OnOutRight",
+                                    groupValue: sellingType,
+                                    onChanged: (value) {
+                                      setState((){
+                                        sellingType = value;
+                                      });
+                                    },
+                                    fillColor: MaterialStateProperty.all(
+                                        TColors.buttonColor),
+                                  ),
+                                  const SizedBox(
+                                    width: 4,
+                                  ),
+                                  const Text("OnOutRight"),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Radio(
+                                    value: "onSale",
+                                    groupValue: sellingType,
+                                    onChanged: (value) {
+                                        setState((){
+                                          sellingType = value;
+                                        });
+                                    },
+                                    fillColor: MaterialStateProperty.all(
+                                        TColors.buttonColor),
+                                  ),
+                                  const SizedBox(
+                                    width: 4,
+                                  ),
+                                  const Text("OnSale"),
+                                ],
+                              ),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
                   ),
                   const SizedBox(
                     height: 10,
