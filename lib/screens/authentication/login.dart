@@ -23,6 +23,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
 
   @override
+  void dispose() {
+    emailController.dispose();
+    pswdController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
     _getPrefsData();
@@ -42,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       appBar: AppBar(
           title: const Text("Sign In"),
           centerTitle: true,
+          automaticallyImplyLeading: false,
           backgroundColor: TColors.appbarColor),
       body: supabaseService.isLoading
           ? const Center(
@@ -124,9 +132,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           RoundedButton(
                             title: 'Sign In',
                             onTap: () async {
-                              supabaseService.setLoading(true);
                               if (_formKey.currentState!.validate()) {
                                 try {
+                                  supabaseService.setLoading(true);
                                   await supabase.auth.signInWithPassword(
                                       email: emailController.text.toString(),
                                       password: pswdController.text.toString());
@@ -150,19 +158,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                             "Please confirm the link in your mail box"),
                                       ),
                                     );
-                                  } else if (e is AuthException && e.message == "Invalid user credential" && mounted) {
+                                  } else if (e is AuthException &&
+                                      e.message == "Invalid user credential" &&
+                                      mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(e.message),
                                       ),
                                     );
-                                  }else if(e is AuthException && mounted){
+                                  } else if (e is AuthException && mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(e.message),
                                       ),
                                     );
-                                  }else{
+                                  } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(e.toString()),

@@ -63,7 +63,7 @@ class _MyAvailableState extends State<MyAvailable> {
     return Scaffold(
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: true,
         title: const Text("My Available"),
         centerTitle: true,
         backgroundColor: TColors.appbarColor,
