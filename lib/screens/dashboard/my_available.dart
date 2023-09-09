@@ -9,6 +9,7 @@ import 'package:task/widgets/custom_textfield.dart';
 import 'package:task/widgets/rounded_button.dart';
 import '../../app/constants/color.dart';
 import '../../widgets/custom_cell.dart';
+import '../modal/location_modal.dart';
 
 class MyAvailable extends StatefulWidget {
   MyAvailable({super.key});
@@ -20,6 +21,7 @@ class MyAvailable extends StatefulWidget {
 class _MyAvailableState extends State<MyAvailable> {
   PostgrestResponse? result;
   List<dynamic>? datalist;
+  List<bool> buttonStatus = [];
 
   Future<List> _getAllData() async {
     result = await supabase.from('available_office').select().execute();
@@ -134,39 +136,137 @@ class _MyAvailableState extends State<MyAvailable> {
                           ],
                           rows: [
                             if (datalist != null && datalist!.isNotEmpty)
-                              ...datalist!.map((rowData) {
+                              ...List.generate(datalist!.length, (index) {
+                                buttonStatus.add(false);
                                 int availableSerial =
-                                    rowData['availableserial'];
+                                    datalist![index]['availableserial'];
 
                                 return DataRow(cells: [
                                   DataCell(
                                     CustomCell(
-                                      text: rowData['officeno'],
+                                      text: datalist![index]['officeno'],
                                       color: TColors.textBackgroundColor,
                                     ),
                                   ),
                                   DataCell(
                                     CustomCell(
-                                      text: rowData['sqftexact'].toString(),
+                                      text: datalist![index]['sqftexact']
+                                          .toString(),
                                       color: TColors.textBackgroundColor,
                                     ),
                                   ),
-                                  DataCell(
-                                    InkWell(
-                                      onTap: () => _showAlertDialog(
-                                          context,
-                                          "Edit/Delete Data",
-                                          "Edit",
-                                          "Delete",
-                                          availableSerial),
-                                      child: const CustomCell(
-                                        text: 'Edit / Delete',
-                                        color: TColors.textBackgroundColor,
+                                  if (!buttonStatus[index])
+                                    DataCell(
+                                      InkWell(
+                                        onTap: () {
+                                          setState(() {
+                                            buttonStatus[index] = true;
+                                          });
+                                        },
+                                        child: const CustomCell(
+                                          text: 'Edit / Delete',
+                                          color: TColors.textBackgroundColor,
+                                        ),
                                       ),
                                     ),
-                                  ),
+                                  if (buttonStatus[index])
+                                    DataCell(Row(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () => _showAlertDialog(
+                                              context,
+                                              "Edit Data",
+                                              "Cancel",
+                                              "Save",
+                                              index,
+                                              availableSerial),
+                                          child: const Icon(
+                                            Icons.edit_outlined,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          width: 20,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (context) => AlertDialog(
+                                                title:
+                                                    const Text("Are You Sure?"),
+                                                actions: [
+                                                  ElevatedButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        buttonStatus[index] = false;
+                                                      });
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: const Text("Cancel"),
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 20,
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () async {
+                                                      try {
+                                                        PostgrestResponse res =
+                                                            await supabase
+                                                                .from(
+                                                                    'available_office')
+                                                                .delete()
+                                                                .eq('availableserial',
+                                                                    availableSerial)
+                                                                .execute();
+                                                        if (res.status == 204) {
+                                                          await _getAllData();
+                                                          setState(() {});
+                                                          ScaffoldMessenger.of(
+                                                                  context)
+                                                              .showSnackBar(
+                                                                  const SnackBar(
+                                                                      content: Text(
+                                                                          "Data Deleted successfully")));
+                                                          Navigator.pop(
+                                                              context);
+                                                        }
+                                                      } catch (e) {
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                                const SnackBar(
+                                                                    content: Text(
+                                                                        "Error in deleting data")));
+                                                      }
+                                                      setState(() {
+                                                        buttonStatus[index] = false;
+                                                      });
+                                                    },
+                                                    child: const Text("Ok"),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                          child: const Icon(
+                                            Icons.delete_outline,
+                                          ),
+                                        ),
+                                        const SizedBox(
+                                          width: 20,
+                                        ),
+                                        GestureDetector(
+                                          onTap: () => setState(() {
+                                            buttonStatus[index] = false;
+                                          }),
+                                          child: const Icon(
+                                            Icons.check,
+                                          ),
+                                        ),
+                                      ],
+                                    ))
                                 ]);
-                              }),
+                              })
                           ],
                         );
                       } else {
@@ -182,8 +282,8 @@ class _MyAvailableState extends State<MyAvailable> {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: RoundedButton(
                     title: "Add",
-                    onTap: () =>
-                        _showAlertDialog(context, "Add Data", "Cancel", "Add"),
+                    onTap: () => _showAlertDialog(
+                        context, "Add Data", "Cancel", "Add", 0),
                   ),
                 ),
               ],
@@ -194,36 +294,36 @@ class _MyAvailableState extends State<MyAvailable> {
     );
   }
 
-  _showAlertDialog(BuildContext context, String text, String btn1, String btn2,
+  _showAlertDialog(
+      BuildContext context, String text, String btn1, String btn2, int index,
       [int? availableSerial]) async {
     final addForm = GlobalKey<FormState>();
     final TextEditingController officeNoController = TextEditingController();
     final TextEditingController floorController = TextEditingController();
     final TextEditingController sqftExactController = TextEditingController();
-    // final TextEditingController builtUpExactController =
-    // TextEditingController();
     final TextEditingController sqftRateController = TextEditingController();
-    // final TextEditingController builtUpRateController = TextEditingController();
+
     final TextEditingController fromDateController = TextEditingController();
-    // final TextEditingController floorLevelController = TextEditingController();
-    // final TextEditingController sqftController = TextEditingController();
-    // final TextEditingController builtUpController = TextEditingController();
     final TextEditingController rentMonthsFromController =
         TextEditingController();
     final TextEditingController rentMonthUptoController =
         TextEditingController();
-    DateTime selectedDate = DateTime.now();
 
-    List<DropdownMenuItem> items = ["item1", "item2", "item3", "item4"]
+    PostgrestResponse res =
+        await supabase.from('location_mas').select().execute();
+    List locList = res.data as List;
+    DateTime selectedDate = DateTime.now();
+    var editRes;
+    List<DropdownMenuItem> items = locList
         .map(
-          (e) => DropdownMenuItem(
-            value: e,
-            child: Text(e),
+          (loc) => DropdownMenuItem(
+            value: loc['locationid'],
+            child: Text(loc['locationname'].toString()),
           ),
         )
         .toList();
 
-    var selectedItem = "item1";
+    var selectedItem;
     String? sellingType;
     if (availableSerial != null) {
       PostgrestResponse editResult = await supabase
@@ -231,7 +331,7 @@ class _MyAvailableState extends State<MyAvailable> {
           .select()
           .eq('availableserial', availableSerial)
           .execute();
-      final editRes = editResult.data[0];
+      editRes = editResult.data[0];
       officeNoController.text = editRes['officeno'].toString();
       floorController.text = editRes['floor'].toString();
       sqftRateController.text = editRes['sqftrate'].toString();
@@ -239,11 +339,8 @@ class _MyAvailableState extends State<MyAvailable> {
       fromDateController.text = editRes['fromdate'].toString();
       rentMonthsFromController.text = editRes['onrentmonthsfrom'].toString();
       rentMonthUptoController.text = editRes['onrentmonthupto'].toString();
-    }
-    void changeRadio(value) {
-      setState(() {
-        sellingType = value;
-      });
+      selectedItem = editRes['locationid'];
+      sellingType = editRes['onoutright'] ? 'OnOutRight' : 'OnSale';
     }
 
     Future<void> _selectDate(BuildContext context) async {
@@ -259,7 +356,6 @@ class _MyAvailableState extends State<MyAvailable> {
           selectedDate = picked;
         });
       }
-
       fromDateController.text = DateFormat('yyyy-MM-dd').format(selectedDate);
     }
 
@@ -271,21 +367,28 @@ class _MyAvailableState extends State<MyAvailable> {
           actions: [
             ElevatedButton(
               onPressed: () async {
-                if (btn1 == "Cancel") {
-                  Navigator.pop(context);
-                } else {
+                setState(() {
+                  buttonStatus[index] = false;
+                });
+                Navigator.pop(context);
+              },
+              child: Text(btn1),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (availableSerial != null) {
                   Map<String, dynamic> data = {
                     'userid': 1,
-                    'locationid': 1,
-                    'officeno': officeNoController.text,
-                    'sqftexact': sqftExactController.text ?? 0,
-                    'floor': floorController.text ?? 0,
-                    'onoutright': true,
-                    'onrent': false,
-                    'fromdate': fromDateController.text,
-                    'sqftrate': sqftRateController.text,
-                    'onrentmonthsfrom': rentMonthsFromController.text,
-                    'onrentmonthupto': rentMonthUptoController.text,
+                    'locationid': selectedItem,
+                    'officeno': officeNoController.text.trim(),
+                    'sqftexact': sqftExactController.text.trim() ?? 0,
+                    'floor': floorController.text.trim() ?? 0,
+                    'onoutright': sellingType == 'OnOutRight' ? true : false,
+                    'onrent': sellingType == 'onSale' ? true : false,
+                    'fromdate': fromDateController.text.trim(),
+                    'sqftrate': sqftRateController.text.trim(),
+                    'onrentmonthsfrom': rentMonthsFromController.text.trim(),
+                    'onrentmonthupto': rentMonthUptoController.text.trim(),
                   };
                   try {
                     final response = await supabase
@@ -302,7 +405,6 @@ class _MyAvailableState extends State<MyAvailable> {
                           content: Text('Data Updated Successfully'),
                         ),
                       );
-                      Navigator.pop(context);
                     }
                   } catch (e) {
                     if (mounted) {
@@ -313,28 +415,23 @@ class _MyAvailableState extends State<MyAvailable> {
                       );
                     }
                   }
-                }
-                ;
-              },
-              child: Text(btn1),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                Map<String, dynamic> data = {
-                  'userid': 1,
-                  'locationid': 1,
-                  'officeno': officeNoController.text,
-                  'sqftexact': sqftExactController.text ?? 0,
-                  'floor': floorController.text ?? 0,
-                  'onoutright': true,
-                  'onrent': false,
-                  'fromdate': fromDateController.text,
-                  'sqftrate': sqftRateController.text,
-                  'onrentmonthsfrom': rentMonthsFromController.text,
-                  'onrentmonthupto': rentMonthUptoController.text,
-                };
-
-                if (btn2 == "Add") {
+                  setState(() {
+                    buttonStatus[index] = false;
+                  });
+                } else {
+                  Map<String, dynamic> data = {
+                    'userid': 1,
+                    'locationid': selectedItem,
+                    'officeno': officeNoController.text,
+                    'sqftexact': sqftExactController.text ?? 0,
+                    'floor': floorController.text ?? 0,
+                    'onoutright': sellingType == 'OnOutRight' ? true : false,
+                    'onrent': sellingType == 'onSale' ? true : false,
+                    'fromdate': fromDateController.text,
+                    'sqftrate': sqftRateController.text,
+                    'onrentmonthsfrom': rentMonthsFromController.text.isNotEmpty ? rentMonthsFromController.text : 0,
+                    'onrentmonthupto': rentMonthUptoController.text.isNotEmpty ? rentMonthUptoController.text : 0,
+                  };
                   if (addForm.currentState!.validate() == true) {
                     try {
                       final response = await supabase
@@ -351,7 +448,6 @@ class _MyAvailableState extends State<MyAvailable> {
                               content: Text('Data inserted Successfully'),
                             ),
                           );
-                          Navigator.pop(context);
                         }
                       }
                     } catch (e) {
@@ -365,103 +461,67 @@ class _MyAvailableState extends State<MyAvailable> {
                       }
                     }
                   }
-                } else {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: Text("Are You Sure?"),
-                      actions: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              PostgrestResponse res = await supabase
-                                  .from('available_office')
-                                  .delete()
-                                  .eq('availableserial', availableSerial)
-                                  .execute();
-                              if (res.status == 204) {
-                                await _getAllData();
-                                setState(() {});
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                        content:
-                                            Text("Data Deleted successfully")));
-                                Navigator.pop(context);
-                                Navigator.pop(context);
-                              }
-                            } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content: Text("Error in deleting data")));
-                            }
-                          },
-                          child: const Text("Yes"),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          child: Text("Cancel"),
-                        ),
-                      ],
-                    ),
-                  );
+                  setState(() {
+                    buttonStatus[index] = false;
+                  });
                 }
+                Navigator.pop(context);
               },
               child: Text(btn2),
             ),
           ],
-          content: Form(
-            key: addForm,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                          controller: officeNoController,
-                          hintText: "Office no.",
-                          validationText: "Please enter office number",
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Expanded(
-                        child: CustomTextField(
-                          controller: sqftExactController,
-                          hintText: "Carpet Exact",
-                          validationText: "Please enter carpet exact",
-                          textFormatter: FilteringTextInputFormatter.digitsOnly,
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Container(
-                    height: 100,
-                    decoration:
-                        BoxDecoration(border: Border.all(color: Colors.black)),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          content: StatefulBuilder(
+            builder: (context, setState) => Form(
+              key: addForm,
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    Row(
                       children: [
+                        Expanded(
+                          child: CustomTextField(
+                            controller: officeNoController,
+                            hintText: "Office no.",
+                            validationText: "Please enter office number",
+                          ),
+                        ),
                         const SizedBox(
-                          width: 5,
+                          width: 10,
                         ),
-                        const Padding(
-                          padding: EdgeInsets.only(top: 15.0),
-                          child: Text("Radio:"),
+                        Expanded(
+                          child: CustomTextField(
+                            controller: sqftExactController,
+                            hintText: "Carpet Exact",
+                            validationText: "Please enter carpet exact",
+                            textFormatter:
+                                FilteringTextInputFormatter.digitsOnly,
+                            keyboardType: TextInputType.number,
+                          ),
                         ),
-                        const SizedBox(
-                          width: 50,
-                        ),
-                        StatefulBuilder(
-                          builder: (context, setState) => Column(
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      height: 70,
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.black)),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(
+                            width: 5,
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 15.0),
+                            child: Text("Radio:"),
+                          ),
+                          const SizedBox(
+                            width: 50,
+                          ),
+                          Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -469,14 +529,25 @@ class _MyAvailableState extends State<MyAvailable> {
                                 children: [
                                   Radio(
                                     value: "OnOutRight",
+                                    // autofocus: availableSerial != null ? editRes['onoutright'] ? true : false : false,
                                     groupValue: sellingType,
-                                    onChanged: (value) {
-                                      setState((){
-                                        sellingType = value;
-                                      });
-                                    },
+                                    activeColor: TColors.buttonColor,
                                     fillColor: MaterialStateProperty.all(
-                                        TColors.buttonColor),
+                                      TColors.buttonColor,
+                                    ),
+                                    onChanged: (value) {
+                                      sellingType = value;
+                                      log(sellingType.toString(),
+                                          name: "SELLING TYPE");
+                                      if (sellingType == 'OnOutRight') {
+                                        log(true.toString(),
+                                            name: 'OnOutRight');
+                                      } else {
+                                        log(false.toString(),
+                                            name: 'OnOutRight');
+                                      }
+                                      setState(() {});
+                                    },
                                   ),
                                   const SizedBox(
                                     width: 4,
@@ -487,129 +558,140 @@ class _MyAvailableState extends State<MyAvailable> {
                               Row(
                                 children: [
                                   Radio(
-                                    value: "onSale",
+                                    value: "OnSale",
                                     groupValue: sellingType,
-                                    onChanged: (value) {
-                                        setState((){
-                                          sellingType = value;
-                                        });
-                                    },
                                     fillColor: MaterialStateProperty.all(
                                         TColors.buttonColor),
+                                    autofocus: availableSerial != null
+                                        ? editRes['onrent']
+                                            ? true
+                                            : false
+                                        : false,
+                                    activeColor: TColors.buttonColor,
+                                    onChanged: (value) {
+                                      sellingType = value;
+                                      log(sellingType.toString(),
+                                          name: "SELLING TYPE");
+                                      setState(() {});
+                                    },
                                   ),
                                   const SizedBox(
                                     width: 4,
                                   ),
-                                  const Text("OnSale"),
+                                  const Text("OnRent"),
                                 ],
                               ),
                             ],
+                          )
+                        ],
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    TextFormField(
+                      controller: fromDateController,
+                      onTap: () => _selectDate(context),
+                      readOnly: true,
+                      validator: (value) =>
+                          value!.isEmpty ? "PLease select date" : null,
+                      decoration: const InputDecoration(
+                        hintText: 'Select Date',
+                        suffixIcon: Icon(Icons.calendar_today),
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomTextField(
+                              controller: sqftRateController,
+                              hintText: "Carpet Rate",
+                              validationText: "Please enter carpet rate",
+                              keyboardType: TextInputType.number,
+                              textFormatter:
+                                  FilteringTextInputFormatter.digitsOnly),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Expanded(
+                          child: CustomTextField(
+                            controller: floorController,
+                            hintText: "Floor",
+                            validationText: "Please enter floor",
+                            keyboardType: TextInputType.number,
+                            textFormatter: FilteringTextInputFormatter.allow(
+                              RegExp(r'^10|[0-9]$'),
+                            ),
                           ),
-                        )
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  TextFormField(
-                    controller: fromDateController,
-                    onTap: () => _selectDate(context),
-                    readOnly: true,
-                    validator: (value) =>
-                        value!.isEmpty ? "PLease select date" : null,
-                    decoration: const InputDecoration(
-                      hintText: 'Select Date',
-                      suffixIcon: Icon(Icons.calendar_today),
+                    const SizedBox(
+                      height: 10,
                     ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                            controller: sqftRateController,
-                            hintText: "Carpet Rate",
-                            validationText: "Please enter carpet rate",
+                    Row(
+                      children: [
+                        Expanded(
+                          child: CustomTextField(
+                            controller: rentMonthsFromController,
+                            hintText: "Rent From",
+                            isEnabled: sellingType == 'OnSale' ? true : false,
+                            textFormatter: FilteringTextInputFormatter.allow(
+                              RegExp(r'^[0-9]{1,2}$'),
+                            ),
+                            keyboardType: TextInputType.number,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Expanded(
+                          child: CustomTextField(
+                            controller: rentMonthUptoController,
+                            hintText: "Rent Upto",
+                            isEnabled: sellingType == 'OnSale' ? true : false,
                             keyboardType: TextInputType.number,
                             textFormatter:
-                                FilteringTextInputFormatter.digitsOnly),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Expanded(
-                        child: CustomTextField(
-                          controller: floorController,
-                          hintText: "Floor",
-                          validationText: "Please enter floor",
-                          keyboardType: TextInputType.number,
-                          textFormatter: FilteringTextInputFormatter.allow(
-                            RegExp(r'^10|[0-9]$'),
+                                FilteringTextInputFormatter.digitsOnly,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomTextField(
-                          controller: rentMonthsFromController,
-                          hintText: "Rent From",
-                          validationText: "Please enter rent from month",
-                          textFormatter: FilteringTextInputFormatter.allow(
-                            RegExp(r'^[0-9]{1,2}$'),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Expanded(
-                        child: CustomTextField(
-                          controller: rentMonthUptoController,
-                          hintText: "Rent Upto",
-                          validationText: "Please enter Rent upto",
-                          keyboardType: TextInputType.number,
-                          textFormatter: FilteringTextInputFormatter.digitsOnly,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  ButtonTheme(
-                    alignedDropdown: true,
-                    child: DropdownButtonFormField(
-                      value: selectedItem,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(color: Colors.black),
-                        ),
-                      ),
-                      items: items,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedItem = value;
-                        });
-                      },
+                      ],
                     ),
-                  ),
-                ],
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    ButtonTheme(
+                      alignedDropdown: true,
+                      child: DropdownButtonFormField(
+                        value: selectedItem,
+                        hint: const Text("Location one"),
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                        ),
+                        items: items,
+                        onChanged: (value) {
+                          setState(() {
+                            selectedItem = value;
+                            print(selectedItem.runtimeType);
+                            print(selectedItem);
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
