@@ -16,11 +16,10 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   User? _user;
-
   TextEditingController emailController = TextEditingController();
   TextEditingController pswdController = TextEditingController();
 
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+
 
   @override
   void dispose() {
@@ -36,13 +35,25 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _getPrefsData() async {
-    var prefs = await _prefs;
-    if (prefs.getString('email') != null) {
-      emailController.text = prefs.getString('email').toString();
-      pswdController.text = prefs.getString('pswd').toString();
+    var pref = await prefs;
+    if (pref.getString('email') != null) {
+      emailController.text = pref.getString('email').toString();
+      pswdController.text = pref.getString('pswd').toString();
     }
   }
-
+  
+  Future<void> _getCurrentUserData() async {
+    try{
+      PostgrestResponse res = await supabase.from('user_mas').select().eq('useremail', emailController.text).execute();
+      int userId = res.data[0]['userid'];
+      SharedPreferences pref = await prefs;
+      pref.setInt('user_id', userId);
+    }catch(e){
+      print("Unable to get current user id");
+      print(e);
+    }
+  }
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,14 +146,15 @@ class _LoginScreenState extends State<LoginScreen> {
                               if (_formKey.currentState!.validate()) {
                                 try {
                                   supabaseService.setLoading(true);
+                                  _getCurrentUserData();
                                   await supabase.auth.signInWithPassword(
                                       email: emailController.text.toString(),
                                       password: pswdController.text.toString());
 
-                                  SharedPreferences prefs = await _prefs;
-                                  prefs.setString(
+                                  SharedPreferences pref = await prefs;
+                                  pref.setString(
                                       'email', emailController.text);
-                                  prefs.setString('pswd', pswdController.text);
+                                  pref.setString('pswd', pswdController.text);
                                   supabaseService.setLoading(false);
                                   if (mounted) {
                                     Navigator.pushNamed(

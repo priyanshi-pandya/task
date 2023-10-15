@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:task/main.dart';
 import 'package:task/widgets/custom_textfield.dart';
@@ -20,11 +21,17 @@ class MyAvailable extends StatefulWidget {
 
 class _MyAvailableState extends State<MyAvailable> {
   PostgrestResponse? result;
-  List<dynamic>? datalist;
+  List<dynamic> datalist = [];
   List<bool> buttonStatus = [];
-
-  Future<List> _getAllData() async {
-    result = await supabase.from('available_office').select().execute();
+  int? userId;
+  Future<List> _getCurrentUserData() async {
+    SharedPreferences pref = await prefs;
+    userId = pref.getInt('user_id');
+    result = await supabase
+        .from('available_office')
+        .select()
+        .eq('userid', userId)
+        .execute();
     datalist = result?.data as List;
     print(datalist?.length);
     return datalist!;
@@ -57,7 +64,7 @@ class _MyAvailableState extends State<MyAvailable> {
   @override
   void initState() {
     super.initState();
-    getAllData = _getAllData();
+    getAllData = _getCurrentUserData();
   }
 
   @override
@@ -89,186 +96,199 @@ class _MyAvailableState extends State<MyAvailable> {
                               child: CircularProgressIndicator(),
                             ));
                       } else if (snapshot.hasData) {
-                        return DataTable(
-                          sortColumnIndex: sortColumnIdx,
-                          sortAscending: sort,
-                          decoration: const BoxDecoration(color: Colors.white),
-                          border: TableBorder.all(style: BorderStyle.none),
-                          dividerThickness: 0,
-                          columnSpacing: 2,
-                          dataRowMinHeight: 38,
-                          headingTextStyle:
-                              const TextStyle(color: Colors.white),
-                          showBottomBorder: false,
-                          columns: [
-                            DataColumn(
-                              label: const CustomCell(
-                                text: 'OfficeNo',
-                                color: TColors.buttonColor,
+                        if (snapshot.data.length > 0) {
+                          return DataTable(
+                            sortColumnIndex: sortColumnIdx,
+                            sortAscending: sort,
+                            decoration:
+                                const BoxDecoration(color: Colors.white),
+                            border: TableBorder.all(style: BorderStyle.none),
+                            dividerThickness: 0,
+                            columnSpacing: 2,
+                            dataRowMinHeight: 38,
+                            headingTextStyle:
+                                const TextStyle(color: Colors.white),
+                            showBottomBorder: false,
+                            columns: [
+                              DataColumn(
+                                label: const CustomCell(
+                                  text: 'OfficeNo',
+                                  color: TColors.buttonColor,
+                                ),
+                                onSort: (columnIndex, ascending) {
+                                  setState(() {
+                                    sort = !sort;
+                                    sortColumnIdx = columnIndex;
+                                  });
+                                  _sort(columnIndex, sort);
+                                },
                               ),
-                              onSort: (columnIndex, ascending) {
-                                setState(() {
-                                  sort = !sort;
-                                  sortColumnIdx = columnIndex;
-                                });
-                                _sort(columnIndex, sort);
-                              },
-                            ),
-                            DataColumn(
-                              label: const CustomCell(
-                                text: 'Carpet',
-                                color: TColors.buttonColor,
+                              DataColumn(
+                                label: const CustomCell(
+                                  text: 'Carpet',
+                                  color: TColors.buttonColor,
+                                ),
+                                onSort: (columnIndex, ascending) {
+                                  setState(() {
+                                    sort = !sort;
+                                    sortColumnIdx = columnIndex;
+                                  });
+                                  _sort(columnIndex, sort);
+                                },
                               ),
-                              onSort: (columnIndex, ascending) {
-                                setState(() {
-                                  sort = !sort;
-                                  sortColumnIdx = columnIndex;
-                                });
-                                _sort(columnIndex, sort);
-                              },
-                            ),
-                            const DataColumn(
-                              label: CustomCell(
-                                text: 'Floor',
-                                color: TColors.buttonColor,
+                              const DataColumn(
+                                label: CustomCell(
+                                  text: 'Floor',
+                                  color: TColors.buttonColor,
+                                ),
                               ),
-                            ),
-                          ],
-                          rows: [
-                            if (datalist != null && datalist!.isNotEmpty)
-                              ...List.generate(datalist!.length, (index) {
-                                buttonStatus.add(false);
-                                int availableSerial =
-                                    datalist![index]['availableserial'];
+                            ],
+                            rows: [
+                              if (datalist != null && datalist!.isNotEmpty)
+                                ...List.generate(datalist!.length, (index) {
+                                  buttonStatus.add(false);
+                                  int availableSerial =
+                                      datalist![index]['availableserial'];
 
-                                return DataRow(cells: [
-                                  DataCell(
-                                    CustomCell(
-                                      text: datalist![index]['officeno'],
-                                      color: TColors.textBackgroundColor,
-                                    ),
-                                  ),
-                                  DataCell(
-                                    CustomCell(
-                                      text: datalist![index]['sqftexact']
-                                          .toString(),
-                                      color: TColors.textBackgroundColor,
-                                    ),
-                                  ),
-                                  if (!buttonStatus[index])
+                                  return DataRow(cells: [
                                     DataCell(
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            buttonStatus[index] = true;
-                                          });
-                                        },
-                                        child: const CustomCell(
-                                          text: 'Edit / Delete',
-                                          color: TColors.textBackgroundColor,
-                                        ),
+                                      CustomCell(
+                                        text: datalist![index]['officeno'],
+                                        color: TColors.textBackgroundColor,
                                       ),
                                     ),
-                                  if (buttonStatus[index])
-                                    DataCell(Row(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () => _showAlertDialog(
-                                              context,
-                                              "Edit Data",
-                                              "Cancel",
-                                              "Save",
-                                              index,
-                                              availableSerial),
-                                          child: const Icon(
-                                            Icons.edit_outlined,
+                                    DataCell(
+                                      CustomCell(
+                                        text: datalist![index]['sqftexact']
+                                            .toString(),
+                                        color: TColors.textBackgroundColor,
+                                      ),
+                                    ),
+                                    if (!buttonStatus[index])
+                                      DataCell(
+                                        InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              buttonStatus[index] = true;
+                                            });
+                                          },
+                                          child: const CustomCell(
+                                            text: 'Edit / Delete',
+                                            color: TColors.textBackgroundColor,
                                           ),
                                         ),
-                                        const SizedBox(
-                                          width: 20,
-                                        ),
-                                        GestureDetector(
-                                          onTap: () {
-                                            showDialog(
-                                              context: context,
-                                              builder: (context) => AlertDialog(
-                                                title:
-                                                    const Text("Are You Sure?"),
-                                                actions: [
-                                                  ElevatedButton(
-                                                    onPressed: () {
-                                                      setState(() {
-                                                        buttonStatus[index] = false;
-                                                      });
-                                                      Navigator.pop(context);
-                                                    },
-                                                    child: const Text("Cancel"),
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 20,
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () async {
-                                                      try {
-                                                        PostgrestResponse res =
-                                                            await supabase
-                                                                .from(
-                                                                    'available_office')
-                                                                .delete()
-                                                                .eq('availableserial',
-                                                                    availableSerial)
-                                                                .execute();
-                                                        if (res.status == 204) {
-                                                          await _getAllData();
-                                                          setState(() {});
+                                      ),
+                                    if (buttonStatus[index])
+                                      DataCell(Row(
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () => _showAlertDialog(
+                                                context,
+                                                "Edit Data",
+                                                "Cancel",
+                                                "Save",
+                                                index,
+                                                availableSerial),
+                                            child: const Icon(
+                                              Icons.edit_outlined,
+                                            ),
+                                          ),
+                                          const SizedBox(
+                                            width: 20,
+                                          ),
+                                          GestureDetector(
+                                            onTap: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (context) =>
+                                                    AlertDialog(
+                                                  title: const Text(
+                                                      "Are You Sure?"),
+                                                  actions: [
+                                                    ElevatedButton(
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          buttonStatus[index] =
+                                                              false;
+                                                        });
+                                                        Navigator.pop(context);
+                                                      },
+                                                      child:
+                                                          const Text("Cancel"),
+                                                    ),
+                                                    const SizedBox(
+                                                      width: 20,
+                                                    ),
+                                                    ElevatedButton(
+                                                      onPressed: () async {
+                                                        try {
+                                                          PostgrestResponse
+                                                              res =
+                                                              await supabase
+                                                                  .from(
+                                                                      'available_office')
+                                                                  .delete()
+                                                                  .eq('availableserial',
+                                                                      availableSerial)
+                                                                  .execute();
+                                                          if (res.status ==
+                                                              204) {
+                                                            await _getCurrentUserData();
+                                                            setState(() {});
+                                                            ScaffoldMessenger
+                                                                    .of(context)
+                                                                .showSnackBar(
+                                                                    const SnackBar(
+                                                                        content:
+                                                                            Text("Data Deleted successfully")));
+                                                            Navigator.pop(
+                                                                context);
+                                                          }
+                                                        } catch (e) {
                                                           ScaffoldMessenger.of(
                                                                   context)
                                                               .showSnackBar(
                                                                   const SnackBar(
                                                                       content: Text(
-                                                                          "Data Deleted successfully")));
-                                                          Navigator.pop(
-                                                              context);
+                                                                          "Error in deleting data")));
                                                         }
-                                                      } catch (e) {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                                const SnackBar(
-                                                                    content: Text(
-                                                                        "Error in deleting data")));
-                                                      }
-                                                      setState(() {
-                                                        buttonStatus[index] = false;
-                                                      });
-                                                    },
-                                                    child: const Text("Ok"),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                          child: const Icon(
-                                            Icons.delete_outline,
+                                                        setState(() {
+                                                          buttonStatus[index] =
+                                                              false;
+                                                        });
+                                                      },
+                                                      child: const Text("Ok"),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
+                                            child: const Icon(
+                                              Icons.delete_outline,
+                                            ),
                                           ),
-                                        ),
-                                        const SizedBox(
-                                          width: 20,
-                                        ),
-                                        GestureDetector(
-                                          onTap: () => setState(() {
-                                            buttonStatus[index] = false;
-                                          }),
-                                          child: const Icon(
-                                            Icons.check,
+                                          const SizedBox(
+                                            width: 20,
                                           ),
-                                        ),
-                                      ],
-                                    ))
-                                ]);
-                              })
-                          ],
-                        );
+                                          GestureDetector(
+                                            onTap: () => setState(() {
+                                              buttonStatus[index] = false;
+                                            }),
+                                            child: const Icon(
+                                              Icons.check,
+                                            ),
+                                          ),
+                                        ],
+                                      ))
+                                  ]);
+                                })
+                            ],
+                          );
+                        } else {
+                          return const Center(
+                            child: Text("No data available"),
+                          );
+                        }
                       } else {
                         return const Center(
                           child: Text("Error while fetching data"),
@@ -318,7 +338,7 @@ class _MyAvailableState extends State<MyAvailable> {
         .map(
           (loc) => DropdownMenuItem(
             value: loc['locationid'],
-            child: Text(loc['locationname'].toString()),
+            child: Text(loc['locationcode'].toString()),
           ),
         )
         .toList();
@@ -367,9 +387,11 @@ class _MyAvailableState extends State<MyAvailable> {
           actions: [
             ElevatedButton(
               onPressed: () async {
-                setState(() {
-                  buttonStatus[index] = false;
-                });
+                if(datalist!.isNotEmpty){
+                  setState(() {
+                    buttonStatus[index] = false;
+                  });
+                }
                 Navigator.pop(context);
               },
               child: Text(btn1),
@@ -378,7 +400,7 @@ class _MyAvailableState extends State<MyAvailable> {
               onPressed: () async {
                 if (availableSerial != null) {
                   Map<String, dynamic> data = {
-                    'userid': 1,
+                    'userid': userId,
                     'locationid': selectedItem,
                     'officeno': officeNoController.text.trim(),
                     'sqftexact': sqftExactController.text.trim() ?? 0,
@@ -398,7 +420,7 @@ class _MyAvailableState extends State<MyAvailable> {
                         .execute();
                     log(response.status.toString(), name: "EDIT STATUS");
                     if (response.status == 204) {
-                      await _getAllData();
+                      await _getCurrentUserData();
                       setState(() {});
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -420,7 +442,7 @@ class _MyAvailableState extends State<MyAvailable> {
                   });
                 } else {
                   Map<String, dynamic> data = {
-                    'userid': 1,
+                    'userid': userId,
                     'locationid': selectedItem,
                     'officeno': officeNoController.text,
                     'sqftexact': sqftExactController.text ?? 0,
@@ -429,8 +451,12 @@ class _MyAvailableState extends State<MyAvailable> {
                     'onrent': sellingType == 'onSale' ? true : false,
                     'fromdate': fromDateController.text,
                     'sqftrate': sqftRateController.text,
-                    'onrentmonthsfrom': rentMonthsFromController.text.isNotEmpty ? rentMonthsFromController.text : 0,
-                    'onrentmonthupto': rentMonthUptoController.text.isNotEmpty ? rentMonthUptoController.text : 0,
+                    'onrentmonthsfrom': rentMonthsFromController.text.isNotEmpty
+                        ? rentMonthsFromController.text
+                        : 0,
+                    'onrentmonthupto': rentMonthUptoController.text.isNotEmpty
+                        ? rentMonthUptoController.text
+                        : 0,
                   };
                   if (addForm.currentState!.validate() == true) {
                     try {
@@ -441,7 +467,7 @@ class _MyAvailableState extends State<MyAvailable> {
                       log(response.status.toString(), name: "STATUS");
                       if (response.status == 201) {
                         if (mounted) {
-                          await _getAllData();
+                          await _getCurrentUserData();
                           setState(() {});
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -461,9 +487,11 @@ class _MyAvailableState extends State<MyAvailable> {
                       }
                     }
                   }
-                  setState(() {
-                    buttonStatus[index] = false;
-                  });
+                  if(datalist!.isNotEmpty){
+                    setState(() {
+                      buttonStatus[index] = false;
+                    });
+                  }
                 }
                 Navigator.pop(context);
               },
@@ -668,7 +696,7 @@ class _MyAvailableState extends State<MyAvailable> {
                       alignedDropdown: true,
                       child: DropdownButtonFormField(
                         value: selectedItem,
-                        hint: const Text("Location one"),
+                        hint: const Text("Loc1"),
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),

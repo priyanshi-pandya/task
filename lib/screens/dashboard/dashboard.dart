@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:task/main.dart';
 import 'package:task/widgets/rounded_button.dart';
 
 import '../../app/constants/color.dart';
@@ -15,19 +17,10 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final startNoController = TextEditingController();
   final endNoController = TextEditingController();
+  String sellingType = 'OnOutRight';
+  List<DropdownMenuItem>? items;
 
-  var sellingType;
-
-  List<DropdownMenuItem> items = ["item1", "item2", "item3", "item4"]
-      .map(
-        (e) => DropdownMenuItem(
-          value: e,
-          child: Text(e),
-        ),
-      )
-      .toList();
-
-  var selectedItem;
+  String? selectedItem;
 
   void changeRadio(value) {
     setState(() {
@@ -38,7 +31,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    selectedItem = "item1";
+    _getLocation();
+    setState(() {});
+  }
+
+  Future<void> _getLocation() async {
+    try {
+      PostgrestResponse response =
+          await supabase.from('location_mas').select().execute();
+      List locList = response.data as List;
+      // selectedItem = locList[0]['locationcode'];
+      items = locList
+          .map(
+            (loc) => DropdownMenuItem(
+              value: loc['locationid'],
+              child: Text(loc['locationcode'].toString()),
+            ),
+          )
+          .toList();
+    } catch (e) {
+      print("Error while fetching location");
+    }
   }
 
   @override
@@ -58,10 +71,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               RoundedButton(
                 title: "View - Available",
-                onTap: () => Navigator.pushNamed(
-                  context,
-                  '/ViewAvailable',
-                ),
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    '/ViewAvailable',
+                  );
+                },
               ),
               const SizedBox(
                 height: 20,
@@ -93,7 +108,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   '/MyAvailable',
                 ),
               ),
-
               const SizedBox(
                 height: 70,
               ),
@@ -101,6 +115,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 alignedDropdown: true,
                 child: DropdownButtonFormField(
                   value: selectedItem,
+                  hint: Text("Loc1"),
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(
                       borderSide: BorderSide(color: Colors.black),

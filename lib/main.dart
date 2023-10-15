@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:task/store/supabase_service.dart';
 import 'app/constants/color.dart';
@@ -21,7 +22,7 @@ void main() async{
 }
 
 var supabase = Supabase.instance.client;
-
+final Future<SharedPreferences> prefs = SharedPreferences.getInstance();
 final supabaseService = SupabaseService();
 
 class MyApp extends StatelessWidget {

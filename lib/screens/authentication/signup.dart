@@ -282,8 +282,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   Navigator.pushReplacementNamed(
                                       context, '/LoginScreen');
                                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("User Registered successfully")));
-                                  final _prefs = await SharedPreferences.getInstance();
-                                  _prefs.clear();
+                                  SharedPreferences pref = await prefs;
+                                  pref.setString('email', emailController.text);
+                                  pref.setString('pswd', pswdController.text);
                                 }
                               }
                               else {
